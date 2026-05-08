@@ -6,7 +6,8 @@ import pandas as pd
 import os
 
 # LOAD MODEL
-model = pickle.load(open("model.pkl", "rb"))
+model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
+model = pickle.load(open(model_path, "rb"))
 
 # PAGE CONFIG
 st.set_page_config(page_title="Student AI Advisor", layout="centered")
