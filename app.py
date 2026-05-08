@@ -63,9 +63,8 @@ Stay productive and manage your academic tasks efficiently.
         return True
 
     except Exception as e:
-        st.error(e)
-        return False
-
+     st.exception(e)
+    return False
 # LOAD MODEL
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 model = pickle.load(open(model_path, "rb"))
