@@ -8,14 +8,40 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 
-def send_email(to_email, task):
+def send_email(to_email, task, days_left):
+
     sender_email = st.secrets["EMAIL"]
     app_password = st.secrets["PASSWORD"]
 
-    subject = "📅 Task Reminder"
-    body = f"Reminder: Your task '{task}' is pending!"
+    subject = "📅 SAPS Smart Reminder"
+
+    # Dynamic message
+    if days_left < 0:
+        message = f"Your task '{task}' is OVERDUE. Please complete it immediately."
+
+    elif days_left == 0:
+        message = f"Your task '{task}' is due TODAY."
+
+    elif days_left == 1:
+        message = f"You have 1 day left to complete your task '{task}'."
+
+    else:
+        message = f"You have {days_left} days left to complete your task '{task}'."
+
+    body = f"""
+Hello Student,
+
+This is a reminder from SAPS (Smart Academic Planner System).
+
+{message}
+
+Stay productive and manage your academic tasks efficiently.
+
+- SAPS Team
+"""
 
     msg = MIMEText(body)
+
     msg["Subject"] = subject
     msg["From"] = sender_email
     msg["To"] = to_email
@@ -23,11 +49,21 @@ def send_email(to_email, task):
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
+
         server.login(sender_email, app_password)
-        server.sendmail(sender_email, to_email, msg.as_string())
+
+        server.sendmail(
+            sender_email,
+            to_email,
+            msg.as_string()
+        )
+
         server.quit()
+
         return True
-    except:
+
+    except Exception as e:
+        st.error(e)
         return False
 
 # LOAD MODEL
