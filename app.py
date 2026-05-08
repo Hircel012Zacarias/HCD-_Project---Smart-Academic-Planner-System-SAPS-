@@ -251,22 +251,28 @@ if len(st.session_state.tasks) > 0:
         st.warning("Task deleted!")
 
     # EMAIL SECTION (✅ CORRECT PLACE)
-    st.subheader("📧 Reminder System")
-
-    email = st.text_input("Enter Email")
-
-    if st.button("Save Email"):
-        st.session_state.email = email
-        st.success("Email saved!")
-
     if st.button("Send Reminder"):
-        if "email" in st.session_state:
-            success = send_email(st.session_state.email, selected_task)
 
-            if success:
-                st.success("✅ Email sent successfully!")
-                st.toast("Email sent!")
-            else:
-                st.error("❌ Failed to send email")
+    if "email" in st.session_state:
+
+        selected_row = df[df["Task"] == selected_task].iloc[0]
+
+        days_left = (
+            pd.to_datetime(selected_row["Date"]).date() - today
+        ).days
+
+        success = send_email(
+            st.session_state.email,
+            selected_task,
+            days_left
+        )
+
+        if success:
+            st.success("✅ Email sent successfully!")
+            st.toast("Email sent!")
+
         else:
-            st.warning("Please save email first")
+            st.error("❌ Failed to send email")
+
+    else:
+        st.warning("Please save email first")
