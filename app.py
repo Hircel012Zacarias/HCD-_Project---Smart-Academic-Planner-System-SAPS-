@@ -5,6 +5,31 @@ import numpy as np
 import pandas as pd
 import os
 
+import smtplib
+from email.mime.text import MIMEText
+
+def send_email(to_email, task):
+    sender_email = st.secrets["EMAIL"]
+    app_password = st.secrets["PASSWORD"]
+
+    subject = "📅 Task Reminder"
+    body = f"Reminder: Your task '{task}' is pending!"
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = to_email
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, app_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        return True
+    except:
+        return False
+
 # LOAD MODEL
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 model = pickle.load(open(model_path, "rb"))
@@ -13,7 +38,7 @@ model = pickle.load(open(model_path, "rb"))
 st.set_page_config(page_title="Student AI Advisor", layout="centered")
 
 # TITLE
-st.title("🎓 Student Academic Planner System")
+st.title("Student Academic Planner System")
 st.write("Predict your academic performance and get personalized improvement insights")
 
 # INPUTS
@@ -189,7 +214,7 @@ if len(st.session_state.tasks) > 0:
         pd.DataFrame(st.session_state.tasks).to_csv(FILE, index=False)
         st.warning("Task deleted!")
 
-    # EMAIL SIMULATION
+    # EMAIL SECTION (✅ CORRECT PLACE)
     st.subheader("📧 Reminder System")
 
     email = st.text_input("Enter Email")
@@ -200,10 +225,12 @@ if len(st.session_state.tasks) > 0:
 
     if st.button("Send Reminder"):
         if "email" in st.session_state:
-            st.success(f"Reminder sent to {st.session_state.email} for {selected_task}")
-            st.toast("Notification sent!")
-        else:
-            st.warning("Save email first")
+            success = send_email(st.session_state.email, selected_task)
 
-else:
-    st.info("No tasks added yet")
+            if success:
+                st.success("✅ Email sent successfully!")
+                st.toast("Email sent!")
+            else:
+                st.error("❌ Failed to send email")
+        else:
+            st.warning("Please save email first")
