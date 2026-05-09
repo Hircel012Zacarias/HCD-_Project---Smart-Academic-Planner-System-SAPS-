@@ -205,16 +205,18 @@ if len(st.session_state.tasks) > 0:
 
         if task["Status"] == "Pending":
             if days_left < 0:
-                st.error(f"😔OVERDUE: {task['Task']}")
+                st.error(f"😔 OVERDUE: {task['Task']}")
             elif days_left == 0:
-                st.error(f"😃TODAY: {task['Task']}")
+                st.error(f"😃 TODAY: {task['Task']}")
                 st.toast(f"Task TODAY: {task['Task']}")
             elif days_left <= 3:
-                st.warning(f" {task['Task']} due in {days_left} days")
+                st.warning(f"{task['Task']} due in {days_left} days")
             elif days_left <= 7:
                 st.info(f"Upcoming: {task['Task']} in {days_left} days")
 
 # DISPLAY
+selected_task = None
+
 if len(st.session_state.tasks) > 0:
 
     df = pd.DataFrame(st.session_state.tasks)
@@ -239,7 +241,8 @@ if len(st.session_state.tasks) > 0:
         pd.DataFrame(st.session_state.tasks).to_csv(FILE, index=False)
         st.warning("Task deleted!")
 
-    # EMAIL SECTION
+# EMAIL SECTION
+st.divider()
 st.subheader("📧 Reminder System")
 
 email = st.text_input("Enter your email")
@@ -253,11 +256,15 @@ if st.button("Save Email"):
     else:
         st.session_state.user_email = email
         st.success("Email saved!")
-    # SEND REMINDER
+
+# SEND REMINDER
 if st.button("Send Reminder"):
 
     if st.session_state.user_email == "":
         st.warning("Please save email first")
+
+    elif selected_task is None:
+        st.warning("Please select a task first")
 
     else:
         selected_row = df[df["Task"] == selected_task].iloc[0]
