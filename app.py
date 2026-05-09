@@ -8,25 +8,21 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 
-def send_email(to_email, task, days_left):
+def send_email(user_email, task, days_left):
 
     sender_email = st.secrets["EMAIL"]
     app_password = st.secrets["PASSWORD"]
 
-    st.write("DEBUG EMAIL:", sender_email)
-    st.write("DEBUG PASSWORD LENGTH:", len(app_password))
-    
     subject = "📅 SAPS Smart Reminder"
 
-    # Dynamic message
     if days_left < 0:
         message = f"Your task '{task}' is OVERDUE. Please complete it immediately."
     elif days_left == 0:
         message = f"Your task '{task}' is due TODAY."
     elif days_left == 1:
-        message = f"You have 1 day left to complete your task '{task}'."
+        message = f"You have 1 day left to complete '{task}'."
     else:
-        message = f"You have {days_left} days left to complete your task '{task}'."
+        message = f"You have {days_left} days left to complete '{task}'."
 
     body = f"""
 Hello Student,
@@ -35,7 +31,7 @@ This is a reminder from SAPS (Smart Academic Planner System).
 
 {message}
 
-Stay productive and manage your academic tasks efficiently.
+Stay productive!
 
 - SAPS Team
 """
@@ -43,7 +39,7 @@ Stay productive and manage your academic tasks efficiently.
     msg = MIMEText(body)
     msg["Subject"] = subject
     msg["From"] = sender_email
-    msg["To"] = to_email
+    msg["To"] = user_email
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -51,19 +47,14 @@ Stay productive and manage your academic tasks efficiently.
 
         server.login(sender_email, app_password)
 
-        server.sendmail(
-            sender_email,
-            to_email,
-            msg.as_string()
-        )
+        server.sendmail(sender_email, user_email, msg.as_string())
 
         server.quit()
         return True
 
     except Exception as e:
-        st.exception(e)
+        st.error(f"Email error: {e}")
         return False
-
 # LOAD MODEL
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 model = pickle.load(open(model_path, "rb"))
@@ -249,38 +240,38 @@ if len(st.session_state.tasks) > 0:
         st.warning("Task deleted!")
 
     # EMAIL SECTION
-    st.subheader("📧 Reminder System")
+st.subheader("📧 Reminder System")
 
-    email = st.text_input("Enter Email")
+email = st.text_input("Enter your email")
 
-    # SAVE EMAIL
-    if st.button("Save Email"):
-        st.session_state.email = email
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
+
+if st.button("Save Email"):
+    if email.strip() == "":
+        st.warning("Please enter email first")
+    else:
+        st.session_state.user_email = email
         st.success("Email saved!")
-
     # SEND REMINDER
-    if st.button("Send Reminder"):
+if st.button("Send Reminder"):
 
-        if "email" in st.session_state:
+    if st.session_state.user_email == "":
+        st.warning("Please save email first")
 
-            selected_row = df[df["Task"] == selected_task].iloc[0]
+    else:
+        selected_row = df[df["Task"] == selected_task].iloc[0]
 
-            days_left = (
-                pd.to_datetime(selected_row["Date"]).date() - today
-            ).days
+        days_left = (pd.to_datetime(selected_row["Date"]).date() - today).days
 
-            success = send_email(
-                st.session_state.email,
-                selected_task,
-                days_left
-            )
+        success = send_email(
+            st.session_state.user_email,
+            selected_task,
+            days_left
+        )
 
-            if success:
-                st.success("Email sent successfully!")
-                st.toast("Email sent!")
-
-            else:
-                st.error("Failed to send email")
-
+        if success:
+            st.success("Email sent successfully!")
+            st.toast("Reminder sent!")
         else:
-            st.warning("Please save email first")
+            st.error("Failed to send email")
