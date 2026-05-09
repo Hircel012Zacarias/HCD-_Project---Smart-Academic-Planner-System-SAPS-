@@ -65,31 +65,39 @@ This is a reminder from SAPS (Smart Academic Planner System).
         st.error(f"Email error: {e}")
         return False
 
-# AUTH SYSTEM (REGISTER + LOGIN)
+#(REGISTER + LOGIN)
 st.title("📚 SAPS - Smart Academic Planner System")
 
-menu = st.radio("Choose Option", ["Login", "Register"])
+# ---------------- REGISTER ----------------
+if st.session_state.page == "register":
 
-# REGISTER
-if menu == "Register":
+    st.subheader("📝 Register")
 
     new_user = st.text_input("Username")
     new_pass = st.text_input("Password", type="password")
-    new_email = st.text_input("Email")
 
-    if st.button("Register"):
+    if st.button("Create Account"):
 
         if new_user in st.session_state.users:
             st.error("User already exists")
+
         else:
-            st.session_state.users[new_user] = {
-                "password": new_pass,
-                "email": new_email
-            }
+            st.session_state.users[new_user] = new_pass
             st.success("Registered successfully!")
 
-# LOGIN
-elif menu == "Login":
+            # 👉 MOVE TO LOGIN AUTOMATICALLY
+            st.session_state.page = "login"
+            st.rerun()
+
+    if st.button("Go to Login"):
+        st.session_state.page = "login"
+        st.rerun()
+
+
+# ---------------- LOGIN ----------------
+elif st.session_state.page == "login":
+
+    st.subheader("🔑 Login")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -97,7 +105,7 @@ elif menu == "Login":
     if st.button("Login"):
 
         if username in st.session_state.users and \
-           st.session_state.users[username]["password"] == password:
+           st.session_state.users[username] == password:
 
             st.session_state.logged_in = True
             st.session_state.user = username
@@ -111,11 +119,14 @@ elif menu == "Login":
         else:
             st.error("Invalid credentials")
 
+    if st.button("Go to Register"):
+        st.session_state.page = "register"
+        st.rerun()
+
 st.stop() if not st.session_state.logged_in else None
 
 # DASHBOARD
 user = st.session_state.user
-
 st.title(f"📊 Welcome {user}")
 
 # ensure task list exists
@@ -204,20 +215,37 @@ for task in tasks:
 st.divider()
 st.subheader("📧 Reminder System")
 
-user_email = st.session_state.users[user]["email"]
+email_input = st.text_input("Enter email for reminder")
+
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
+
+if st.button("Save Email"):
+    if email_input.strip() == "":
+        st.warning("Enter email first")
+    else:
+        st.session_state.user_email = email_input
+        st.success("Email saved!")
 
 if st.button("Send Reminder"):
 
-    if len(tasks) == 0:
+    if st.session_state.user_email == "":
+        st.warning("Please save email first")
+
+    elif len(st.session_state.tasks[user]) == 0:
         st.warning("No tasks found")
 
     else:
-        selected_row = df[df["Task"] == selected_task].iloc[0]
 
-        days_left = (pd.to_datetime(selected_row["Date"]).date() - today).days
+        df = pd.DataFrame(st.session_state.tasks[user])
+        selected_task = df["Task"].iloc[0]  # or keep your selector
+
+        selected_row = df.iloc[0]
+
+        days_left = (pd.to_datetime(selected_row["Date"]).date() - datetime.today().date()).days
 
         success = send_email(
-            user_email,
+            st.session_state.user_email,
             selected_task,
             days_left
         )
