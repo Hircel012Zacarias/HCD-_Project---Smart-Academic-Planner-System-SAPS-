@@ -18,13 +18,10 @@ def send_email(to_email, task, days_left):
     # Dynamic message
     if days_left < 0:
         message = f"Your task '{task}' is OVERDUE. Please complete it immediately."
-
     elif days_left == 0:
         message = f"Your task '{task}' is due TODAY."
-
     elif days_left == 1:
         message = f"You have 1 day left to complete your task '{task}'."
-
     else:
         message = f"You have {days_left} days left to complete your task '{task}'."
 
@@ -41,7 +38,6 @@ Stay productive and manage your academic tasks efficiently.
 """
 
     msg = MIMEText(body)
-
     msg["Subject"] = subject
     msg["From"] = sender_email
     msg["To"] = to_email
@@ -59,12 +55,12 @@ Stay productive and manage your academic tasks efficiently.
         )
 
         server.quit()
-
         return True
 
     except Exception as e:
-     st.exception(e)
-    return False
+        st.exception(e)
+        return False
+
 # LOAD MODEL
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 model = pickle.load(open(model_path, "rb"))
@@ -277,11 +273,11 @@ if len(st.session_state.tasks) > 0:
             )
 
             if success:
-                st.success("✅ Email sent successfully!")
+                st.success("Email sent successfully!")
                 st.toast("Email sent!")
 
             else:
-                st.error("❌ Failed to send email")
+                st.error("Failed to send email")
 
         else:
             st.warning("Please save email first")
