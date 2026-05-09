@@ -8,9 +8,9 @@ import smtplib
 from email.mime.text import MIMEText
 
 
-# INIT SESSION STATE
+#INIT SESSION STATE
 if "users" not in st.session_state:
-    st.session_state.users = {} 
+    st.session_state.users = {}
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -19,9 +19,16 @@ if "user" not in st.session_state:
     st.session_state.user = ""
 
 if "tasks" not in st.session_state:
-    st.session_state.tasks = {} 
+    st.session_state.tasks = {}
 
-# EMAIL FUNCTION
+if "page" not in st.session_state:
+    st.session_state.page = "login"
+
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
+
+
+#EMAIL FUNCTION 
 def send_email(user_email, task, days_left):
 
     sender_email = st.secrets["EMAIL"]
@@ -65,10 +72,12 @@ This is a reminder from SAPS (Smart Academic Planner System).
         st.error(f"Email error: {e}")
         return False
 
-#(REGISTER + LOGIN)
+
+#APP TITLE 
 st.title("📚 SAPS - Smart Academic Planner System")
 
-# ---------------- REGISTER ----------------
+
+#REGISTER 
 if st.session_state.page == "register":
 
     st.subheader("📝 Register")
@@ -85,7 +94,6 @@ if st.session_state.page == "register":
             st.session_state.users[new_user] = new_pass
             st.success("Registered successfully!")
 
-            # 👉 MOVE TO LOGIN AUTOMATICALLY
             st.session_state.page = "login"
             st.rerun()
 
@@ -94,7 +102,7 @@ if st.session_state.page == "register":
         st.rerun()
 
 
-# ---------------- LOGIN ----------------
+#LOGIN 
 elif st.session_state.page == "login":
 
     st.subheader("🔑 Login")
@@ -113,6 +121,7 @@ elif st.session_state.page == "login":
             if username not in st.session_state.tasks:
                 st.session_state.tasks[username] = []
 
+            st.session_state.page = "dashboard"
             st.success("Login successful!")
             st.rerun()
 
@@ -123,26 +132,21 @@ elif st.session_state.page == "login":
         st.session_state.page = "register"
         st.rerun()
 
-st.stop() if not st.session_state.logged_in else None
 
-# DASHBOARD
+#STOP IF NOT LOGGED 
+if not st.session_state.logged_in:
+    st.stop()
+
+
+#DASHBOARD 
 user = st.session_state.user
 st.title(f"📊 Welcome {user}")
 
-# ensure task list exists
 if user not in st.session_state.tasks:
     st.session_state.tasks[user] = []
 
 
-# INPUTS 
-study_hours = st.slider("Study Hours", 0, 12, 3)
-sleep_hours = st.slider("Sleep Hours", 0, 12, 6)
-attendance = st.slider("Attendance (%)", 0, 100, 75)
-screen_time = st.slider("Screen Time", 0, 12, 4)
-extracurricular = st.slider("Extracurricular", 0, 10, 2)
-
-
-# TASK INPUT
+#TASK INPUT
 st.header("📅 Tasks")
 
 task_name = st.text_input("Task Name")
@@ -166,10 +170,11 @@ if st.button("➕ Add Task"):
         st.error("Enter task name")
 
 
-# DISPLAY TASKS
+#DISPLAY TASKS 
 today = datetime.today().date()
-
 tasks = st.session_state.tasks[user]
+
+selected_task = None
 
 if len(tasks) > 0:
 
@@ -193,7 +198,8 @@ if len(tasks) > 0:
         ]
         st.warning("Task deleted!")
 
-# ALERTS
+
+#ALERTS 
 st.subheader("🚨 Smart Alerts")
 
 for task in tasks:
@@ -211,38 +217,37 @@ for task in tasks:
         elif days_left <= 7:
             st.info(f"Upcoming: {task['Task']} in {days_left} days")
 
-# EMAIL SYSTEM
+
+#EMAIL SYSTEM
 st.divider()
 st.subheader("📧 Reminder System")
 
 email_input = st.text_input("Enter email for reminder")
 
-if "user_email" not in st.session_state:
-    st.session_state.user_email = ""
-
 if st.button("Save Email"):
-    if email_input.strip() == "":
-        st.warning("Enter email first")
-    else:
+    if email_input.strip():
         st.session_state.user_email = email_input
         st.success("Email saved!")
+    else:
+        st.warning("Enter email first")
+
 
 if st.button("Send Reminder"):
 
     if st.session_state.user_email == "":
         st.warning("Please save email first")
 
-    elif len(st.session_state.tasks[user]) == 0:
+    elif len(tasks) == 0:
         st.warning("No tasks found")
+
+    elif selected_task is None:
+        st.warning("Select a task first")
 
     else:
 
-        df = pd.DataFrame(st.session_state.tasks[user])
-        selected_task = df["Task"].iloc[0]  # or keep your selector
+        selected_row = df[df["Task"] == selected_task].iloc[0]
 
-        selected_row = df.iloc[0]
-
-        days_left = (pd.to_datetime(selected_row["Date"]).date() - datetime.today().date()).days
+        days_left = (pd.to_datetime(selected_row["Date"]).date() - today).days
 
         success = send_email(
             st.session_state.user_email,
