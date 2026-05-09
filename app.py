@@ -13,6 +13,9 @@ def send_email(to_email, task, days_left):
     sender_email = st.secrets["EMAIL"]
     app_password = st.secrets["PASSWORD"]
 
+    st.write("DEBUG EMAIL:", sender_email)
+    st.write("DEBUG PASSWORD LENGTH:", len(app_password))
+    
     subject = "📅 SAPS Smart Reminder"
 
     # Dynamic message
