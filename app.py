@@ -7,7 +7,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 
-# ---------------- LOGIN SYSTEM ----------------
+# LOGIN SYSTEM 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -17,7 +17,7 @@ if "user" not in st.session_state:
 if "tasks" not in st.session_state:
     st.session_state.tasks = {}
 
-# ---------------- EMAIL FUNCTION ----------------
+# EMAIL FUNCTION 
 def send_email(user_email, task, days_left):
 
     sender_email = st.secrets["EMAIL"]
@@ -52,9 +52,15 @@ This is a reminder from SAPS (Smart Academic Planner System).
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
+
+        # 🔍 DEBUG (TEMPORARY - REMOVE AFTER TEST)
+        st.write("EMAIL:", sender_email)
+        st.write("PASS LENGTH:", len(app_password))
+
         server.login(sender_email, app_password)
         server.sendmail(sender_email, user_email, msg.as_string())
         server.quit()
+
         return True
 
     except Exception as e:
@@ -62,12 +68,12 @@ This is a reminder from SAPS (Smart Academic Planner System).
         return False
 
 
-# ---------------- LOGIN PAGE ----------------
+#LOGIN PAGE 
 if not st.session_state.logged_in:
 
-    st.title("🔐 SAPS Login")
+    st.title("🔐 Smart Academic Planner System (SAPS) Login")
 
-    username = st.text_input("Username")
+    username = st.text_input("Username or email")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
@@ -81,32 +87,32 @@ if not st.session_state.logged_in:
 
     st.stop()
 
-# ---------------- APP START ----------------
+#APP START
 st.set_page_config(page_title="SAPS System", layout="centered")
 
 st.title(f"📚 SAPS Dashboard - {st.session_state.user}")
 
 user = st.session_state.user
 
-# ---------------- MODEL ----------------
+#MODEL 
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 model = pickle.load(open(model_path, "rb"))
 
-# ---------------- INPUTS ----------------
-study_hours = st.slider("Study Hours per Day", 0.0, 12.0, 3.0)
-sleep_hours = st.slider("Sleep Hours per Night", 0.0, 12.0, 6.0)
-attendance = st.slider("Attendance (%)", 0.0, 100.0, 75.0)
-screen_time = st.slider("Screen Time (hours/day)", 0.0, 12.0, 4.0)
-extracurricular = st.slider("Extracurricular (hours/week)", 0.0, 10.0, 2.0)
-previous_score = st.slider("Previous SGPA", 0.0, 10.0, 6.0)
+#INPUTS 
+study_hours = st.slider("Study Hours per Day", 0, 12, 3)
+sleep_hours = st.slider("Sleep Hours per Night", 0, 12, 6)
+attendance = st.slider("Attendance (%)", 0, 100, 75)
+screen_time = st.slider("Screen Time (hours/day)", 0, 12, 4)
+extracurricular = st.slider("Extracurricular (hours/week)", 0, 10, 2)
+previous_score = st.slider("Previous SGPA", 0, 10, 6)
 
-# ---------------- TASKS PER USER ----------------
+#TASKS PER USER
 if user not in st.session_state.tasks:
     st.session_state.tasks[user] = []
 
 FILE = "tasks.csv"
 
-# ---------------- ADD TASK ----------------
+#ADD TASK 
 st.header("📅 Academic Smart Planner")
 
 task_name = st.text_input("Task Name")
@@ -126,7 +132,7 @@ if st.button("➕ Add Task"):
     else:
         st.error("Enter task name")
 
-# ---------------- DISPLAY TASKS ----------------
+#DISPLAY TASKS
 today = datetime.today().date()
 
 if len(st.session_state.tasks[user]) > 0:
@@ -154,7 +160,7 @@ if len(st.session_state.tasks[user]) > 0:
         ]
         st.warning("Task deleted!")
 
-# ---------------- ALERTS ----------------
+#ALERTS
 st.subheader("🚨 Smart Alerts")
 
 for task in st.session_state.tasks[user]:
@@ -170,7 +176,7 @@ for task in st.session_state.tasks[user]:
         elif days_left <= 7:
             st.info(f"Upcoming: {task['Task']} in {days_left} days")
 
-# ---------------- EMAIL ----------------
+#EMAIL ----------------
 st.divider()
 st.subheader("📧 Reminder System")
 
